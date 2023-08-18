@@ -1,11 +1,28 @@
-body { background: #141414; color: white; font-family: arial; text-align: center; }
-#logo { width: 300px; }
-input { font-size: 20px; padding: 5px;     border-radius: 5px;
+body {
+    background: #141414;
+    color: white;
+    font-family: arial;
+    text-align: center;
 }
-input[type=submit] { 
-    background: black; 
-    color: white; 
-    border: solid white 1px; 
+
+#logo {
+    width: 300px;
+}
+
+input {
+    font-size: 20px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+input[type=submit],
+button.search-button {
+    background: black;
+    color: white;
+    border: solid white 1px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 #results {
@@ -19,13 +36,18 @@ input[type=submit] {
     border-radius: 20px;
 }
 
-h1 { 
+h1 {
     margin-left: 50px;
 }
+
 ul {
     list-style-type: none;
 }
+
 li {
     padding: 10px;
 }
-  
+
+.back-button {
+    margin-top: 20px;
+}
