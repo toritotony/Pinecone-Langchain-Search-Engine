@@ -11,7 +11,7 @@ import pinecone
 
 app = Flask(__name__)
 
-def perform_query(pdf_path, query):
+def index_pdf(pdf_path):
     loader = PyPDFLoader(pdf_path)
     data = loader.load()
 
@@ -28,12 +28,17 @@ def perform_query(pdf_path, query):
     index_name = "wolfe-test"
     docsearch = Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
 
-    docs = docsearch.similarity_search(query)
+    return docsearch
 
+def perform_query(index, query):
+    docs = index.similarity_search(query)
+
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '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')
     llm = OpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
     chain = load_qa_chain(llm, chain_type="stuff")
 
-    return chain.run(input_documents=docs, question=query)
+    response = chain.run(input_documents=docs, question=query)
+    return response
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
@@ -43,19 +48,21 @@ def serve_static(filename):
 def search_form():
     return render_template('search_form.html')
 
-@app.route('/search', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        query = request.form['query']
-        pdf = request.files['pdf']
+@app.route('/search', methods=['POST'])
+def search():
+    pdf = request.files['pdf']
+    query = request.form['query']
 
-        if pdf and query:
-            pdf_path = os.path.join('uploads', pdf.filename)
-            pdf.save(pdf_path)
+    if pdf and query:
+        pdf_path = os.path.join('c:\\Users\\wolfe\\OneDrive\\Desktop\\BOOKS', pdf.filename)
+        pdf.save(pdf_path)
 
-            response = perform_query(pdf_path, query)
+        index = index_pdf(pdf_path)
+        results = perform_query(index, query)
 
-            return render_template('search_results.html', query=query, response=response)
+        return render_template('search_results.html', query=query, results=results)
+
+    return "Please provide both a PDF and a query."
 
 if __name__ == '__main__':
     app.run(debug=True)
