@@ -18,8 +18,8 @@ def index_pdf(pdf_path):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=0)
     texts = text_splitter.split_documents(data)
 
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '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')
-    PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', '9d837134-08fe-4023-a178-f361ae686679')
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+    PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', '')
     PINECONE_API_ENV = os.environ.get('PINECONE_API_ENV', 'gcp-starter')
 
     embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
@@ -33,7 +33,7 @@ def index_pdf(pdf_path):
 def perform_query(index, query):
     docs = index.similarity_search(query)
 
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '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')
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
     llm = OpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
     chain = load_qa_chain(llm, chain_type="stuff")
 
