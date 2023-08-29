@@ -149,8 +149,8 @@ def video_transcribe():
             except sr.UnknownValueError:
                 return "Transcription could not be performed."
 
-            index = index_pdf(transcribed_text)  # Replace with your indexing function
-            results = perform_query(index, query)  # Replace with your querying function
+            index = index_pdf(transcribed_text)  
+            results = perform_query(index, query)  
 
             return render_template('search_results.html', query=query, results=results)
         else:
