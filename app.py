@@ -7,6 +7,7 @@ from langchain.chains.question_answering import load_qa_chain
 import pinecone
 import requests
 import openai
+from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_audio
 import tempfile
 import mimetypes
 import docx2txt 
@@ -15,6 +16,7 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pytube import YouTube
 import speech_recognition as sr
+import whisper
 
 app = Flask(__name__)
 
@@ -43,7 +45,7 @@ def extract_text_from_pdf(pdf_path):
     for page in pdf_reader.pages:
         text += page.extract_text()
     return text
-
+ 
 def perform_query(index, query):
     docs = index.similarity_search(query)
 
@@ -129,35 +131,48 @@ def video_transcribe():
         video_link = request.form['video_link']
         query = request.form['query']
 
+        # Create a temporary directory
+        temp_dir = tempfile.TemporaryDirectory()
+
+        # Define the temporary audio file paths
+        temp_audio_mp3_path = os.path.join(temp_dir.name, 'youtube_audio_copy.mp3')
+        
         if video_link and query:
             try:
+                # Download the audio from the YouTube link
                 yt = YouTube(video_link)
-                stream = yt.streams.filter(only_audio=True).first()
-                
-                temp_audio_path = 'C:\\Users\\wolfe\\OneDrive\\Desktop\\pinecone-test\\youtube_audio.mp4'
-                
-                stream.download(output_path=os.path.dirname(temp_audio_path), filename='youtube_audio_copy.mp4')
+                audio_stream = yt.streams.filter(only_audio=True).first()
+                audio_stream.download(output_path=temp_dir.name, filename='youtube_audio_copy.mp3')
+                print("Audio downloaded successfully.")
+
+                # Load the whisper model and transcribe the audio
+                model = whisper.load_model("base")
+                result = model.transcribe(temp_audio_mp3_path)
+                transcribed_text = result["text"]
+                print(transcribed_text)
+
+                # Detect the language (optional)
+                language = detect(transcribed_text)
+                print(f"Detected language: {language}")
+
+                # ... Perform indexing based on 'transcribed_text' ...
+                index = index_pdf(transcribed_text)
+                print("Indexing successful")
+
+                # ... Perform query based on 'index' and 'query' ...
+                results = perform_query(index, query)
+                print("Query successful")
+
+                return render_template('search_results.html', query=query, results=results)
             except Exception as download_error:
                 return f"Error downloading the YouTube video: {str(download_error)}"
+            finally:
+                # Clean up the temporary audio files
+                if os.path.exists(temp_audio_mp3_path):
+                    os.remove(temp_audio_mp3_path)
 
-            recognizer = sr.Recognizer()
-            with sr.AudioFile(temp_audio_path) as source:
-                audio = recognizer.record(source)
-
-            try:
-                transcribed_text = recognizer.recognize_google(audio)
-            except sr.UnknownValueError:
-                return "Transcription could not be performed."
-
-            index = index_pdf(transcribed_text)  
-            results = perform_query(index, query)  
-
-            return render_template('search_results.html', query=query, results=results)
-        else:
-            return "Please provide both a video link and a query."
     except Exception as e:
         return render_template('error.html', error_message=str(e))
-
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
