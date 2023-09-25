@@ -151,10 +151,6 @@ def video_transcribe():
                 transcribed_text = result["text"]
                 print(transcribed_text)
 
-                # Detect the language (optional)
-                language = detect(transcribed_text)
-                print(f"Detected language: {language}")
-
                 # ... Perform indexing based on 'transcribed_text' ...
                 index = index_pdf(transcribed_text)
                 print("Indexing successful")
