@@ -5,12 +5,17 @@ import logging
 import tempfile
 import mimetypes
 import docx2txt
+import docx2pdf
+import pythoncom
+from docx2pdf import convert
 from io import BytesIO
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfReader, PdfFileWriter, PdfFileReader, PageObject
 from pytube import YouTube
 from flask import Flask, render_template, request
 from flask_limiter import Limiter
 from werkzeug.utils import secure_filename
+from docx import Document
+from reportlab.pdfgen import canvas
 
 
 # Internal imports
@@ -25,14 +30,14 @@ import config
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limits uploads to 16MB
+app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # Limits uploads to 1000MB
 
 # Configuration and Logging
 logging.basicConfig(level=logging.DEBUG)
 app.logger.info('Info level log')
 app.logger.warning('Warning level log')
 
-UPLOAD_FOLDER = 'C:\Users\wolfe\OneDrive\Desktop\pinecone-test\upload-folder'
+UPLOAD_FOLDER = 'C:\\Users\\wolfe\\OneDrive\\Desktop\\pinecone-test\\upload-folder'
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', config.OPENAI_API_KEY)
 PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', config.PINECONE_API_KEY)
 PINECONE_API_ENV = os.environ.get('PINECONE_API_ENV', config.PINECONE_API_ENV)
@@ -56,33 +61,47 @@ model = whisper.load_model("base")
 def get_remote_address():
     return request.remote_addr
 
-limiter = Limiter(app, key_func=get_remote_address)  # Adjust based on your needs
+limiter = Limiter(app=app, key_func=get_remote_address)  # Adjust based on your needs
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def limit_tokens(text, max_tokens=3900, buffer_tokens=260): 
+    num_tokens = len(text.split())  
+    if num_tokens <= max_tokens - buffer_tokens:
+        return [text]
 
-def check_content(content):
-    # Call a content moderation API
-    response = requests.post('https://content-moderation-api.example.com/check', data={'text': content})
-    if response.json().get('safe'):
-        return True
-    else:
-        return False, response.json().get('reason')
+    words = text.split()
+    texts = []
+    truncated_text = ""
 
-def index_plain_text(content):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=0)
-    texts = text_splitter.split_documents(content)
-    embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-    index_name = "wolfe-test"
-    docsearch = Pinecone.from_texts(texts, embeddings, index_name=index_name)
-    return docsearch
+    while words:
+        while words and len(truncated_text.split()) + len(words[0].split()) <= max_tokens - buffer_tokens:
+            truncated_text += words.pop(0) + " "
+        texts.append(truncated_text)
+        truncated_text = ""
+    
+    return texts
 
 def index_pdf(content):
-    if isinstance(content, str):  # Plain text content
-        return index_plain_text(content)
-    else:  # Assuming it's a Document instance, future handling for other document types can go here.
-        return index_plain_text(content)
+    if isinstance(content, str):  
+        texts = [content]
+    else:  
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        texts = text_splitter.split_documents(content)
+
+    texts = [text for text in texts if len(text) <= 3900]
+    texts = [subtext for text in texts for subtext in limit_tokens(text)]
+
+    embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
+    index_name = "test"
+    try:
+        docsearch = Pinecone.from_texts(texts, embeddings, index_name=index_name)
+    except Exception as e:
+        print(f"Error while indexing: {e}")
+        return None
+    return docsearch
 
 def extract_text_from_pdf(pdf_path):
     pdf_reader = PdfReader(pdf_path)
@@ -93,7 +112,6 @@ def extract_text_from_pdf(pdf_path):
  
 def perform_query(index, query):
     docs = index.similarity_search(query)
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', config.OENAI_API_KEY)
     llm = OpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
     chain = load_qa_chain(llm, chain_type="stuff")
     response = chain.run(input_documents=docs, question=query)
@@ -111,6 +129,7 @@ def upload_file():
 
 @app.route('/search', methods=['POST'])
 def search():
+    pythoncom.CoInitialize()
     app.logger.debug('Received search request.')
     try:
         pdf = request.files['pdf']
@@ -118,15 +137,51 @@ def search():
         if pdf and query:
             # Check the file extension to determine the type of document
             if pdf.filename.endswith('.pdf'):
-                pdf_content = pdf.read()
+                # Save the uploaded file temporarily
+                temp_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename))
+                pdf.save(temp_path)
+                # Extract text from the saved PDF
+                pdf_content = extract_text_from_pdf(temp_path)
+                pdf_content = limit_tokens(pdf_content)
+                # Remove the temporary file
+                os.remove(temp_path)
                 index = index_pdf(pdf_content)
             elif pdf.filename.endswith('.txt'):
-                txt_content = pdf.read().decode('utf-8')
-                index = index_pdf(txt_content)
+                temp_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename))
+                pdf.save(temp_path)
+                
+                # Convert txt to pdf
+                pdf_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename) + ".pdf")
+                pdf_writer = PdfFileWriter()
+                with open(temp_path, 'r', encoding='utf-8') as txt_file:
+                    txt_content = txt_file.read()
+                    pdf_page = pdf_writer.addPage(PageObject.createBlankPage(width=595, height=842))
+                    pdf_page.drawText(txt_content)
+                with open(pdf_path, "wb") as pdf_file:
+                    pdf_writer.write(pdf_file)
+                
+                os.remove(temp_path)  # Remove the temporary txt file
+                
+                # Extract text from the converted PDF
+                pdf_content = extract_text_from_pdf(pdf_path)
+                pdf_content = limit_tokens(pdf_content)
+                os.remove(pdf_path)  # Remove the temporary PDF file
+                index = index_pdf(pdf_content)
+
             elif pdf.filename.endswith('.docx'):
-                docx_content = pdf.read()
-                txt_content = docx2txt.process(BytesIO(docx_content))
-                index = index_pdf(txt_content)
+                temp_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename))
+                pdf.save(temp_path)
+                
+                # Convert docx to pdf
+                pdf_path = temp_path + ".pdf"
+                docx2pdf.convert(temp_path, pdf_path)
+                os.remove(temp_path)  # Remove the temporary docx file
+                
+                # Extract text from the converted PDF
+                pdf_content = extract_text_from_pdf(pdf_path)
+                pdf_content = limit_tokens(pdf_content)
+                os.remove(pdf_path)  # Remove the temporary PDF file
+                index = index_pdf(pdf_content)
             else:
                 return "Unsupported file format."
             results = perform_query(index, query)
@@ -134,7 +189,9 @@ def search():
             return render_template('search_results.html', query=query, results=results)
         return "Please provide both a document and a query."
     except Exception as e:
+        import traceback
         app.logger.error(f"Error encountered during search: {str(e)}")
+        app.logger.error(traceback.format_exc())
         return render_template('error.html', error_message=str(e))
 
 @app.route('/index_from_link', methods=['POST'])
@@ -155,12 +212,15 @@ def index_from_link():
                 mime_type, _ = mimetypes.guess_type(link)
                 if mime_type == 'application/pdf':
                     content_text = extract_text_from_pdf(temp_file_path)
+                    content_text = limit_tokens(content_text)
                 elif mime_type == 'text/plain':
                     with open(temp_file_path, 'r', encoding='utf-8') as txt_file:
                         content_text = txt_file.read()
+                        content_text = limit_tokens(content_text)
                 elif mime_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     docx_content = temp_file.read()
                     content_text = docx2txt.process(BytesIO(docx_content))
+                    content_text = limit_tokens(content_text)
                 else:
                     return "Unsupported link format."
                 index = index_pdf(content_text)
@@ -185,10 +245,18 @@ def video_transcribe():
                 yt = YouTube(video_link)
                 audio_stream = yt.streams.filter(only_audio=True).first()
                 audio_stream.download(output_path=temp_dir.name, filename='youtube_audio_copy.mp3')
+                print("Audio downloaded successfully.")
                 result = model.transcribe(temp_audio_mp3_path)
                 transcribed_text = result["text"]
+                transcribed_texts = limit_tokens(transcribed_text)
+                for text in transcribed_texts:
+                    index = index_pdf(text)
+                    results = perform_query(index, query)
+                print(transcribed_text)
                 index = index_pdf(transcribed_text)
+                print("Indexing successful")
                 results = perform_query(index, query)
+                print("Query successful")
                 return render_template('search_results.html', query=query, results=results)
             except Exception as download_error:
                 return f"Error downloading the YouTube video: {str(download_error)}"
