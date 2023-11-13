@@ -7,9 +7,9 @@ import mimetypes
 import docx2txt
 import docx2pdf
 import pythoncom
-from docx2pdf import convert
+import yt_dlp
 from io import BytesIO
-from PyPDF2 import PdfReader, PdfFileWriter, PdfFileReader, PageObject
+from PyPDF2 import PdfReader, PdfFileWriter, PageObject
 from pytube import YouTube
 from flask import Flask, render_template, request
 from flask_limiter import Limiter
@@ -19,6 +19,7 @@ from reportlab.pdfgen import canvas
 
 
 # Internal imports
+from langchain.document_loaders import PyPDFLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone
 from langchain.llms import OpenAI
@@ -32,15 +33,11 @@ import config
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # Limits uploads to 1000MB
 
-# Configuration and Logging
-logging.basicConfig(level=logging.DEBUG)
-app.logger.info('Info level log')
-app.logger.warning('Warning level log')
-
 UPLOAD_FOLDER = 'C:\\Users\\wolfe\\OneDrive\\Desktop\\pinecone-test\\upload-folder'
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', config.OPENAI_API_KEY)
 PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', config.PINECONE_API_KEY)
 PINECONE_API_ENV = os.environ.get('PINECONE_API_ENV', config.PINECONE_API_ENV)
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
 
 if not OPENAI_API_KEY:
     app.logger.error('OPENAI_API_KEY not set in environment variables!')
@@ -50,9 +47,8 @@ if not PINECONE_API_KEY:
     app.logger.error('PINECONE_API_KEY not set in environment variables!')
     raise ValueError('Required environment variable not set!')
 
+# initialize the pinecone service
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
-
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
 
 # Load external services
 model = whisper.load_model("base")
@@ -83,38 +79,67 @@ def limit_tokens(text, max_tokens=3900, buffer_tokens=260):
     
     return texts
 
+def read_content(file_path):
+    file_extension = os.path.splitext(file_path)[1].lower()
+    if file_extension == '.pdf':
+        # Extract text from PDF
+        with open(file_path, "rb") as f:
+            pdf_reader = PdfReader(f)
+            text = ''.join(page.extract_text() for page in pdf_reader.pages if page.extract_text())
+        return text
+    elif file_extension == '.txt':
+        # Read text from TXT file
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    elif file_extension == '.docx':
+        # Extract text from DOCX file
+        return docx2txt.process(file_path)
+    else:
+        return None  # Unsupported file type
+
 def index_pdf(content):
-    if isinstance(content, str):  
-        texts = [content]
-    else:  
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-        texts = text_splitter.split_documents(content)
+    print("Indexing")
+    if not isinstance(content, str):  
+        content = read_content(content)
 
-    texts = [text for text in texts if len(text) <= 3900]
+    if content is None:
+        print("Error: Unsupported content type or unable to read content.")
+        return None
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
+    texts = text_splitter.create_documents(content)
+    texts = [text for text in texts if len(texts) <= 3900]
     texts = [subtext for text in texts for subtext in limit_tokens(text)]
-
     embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
     index_name = "test"
     try:
-        docsearch = Pinecone.from_texts(texts, embeddings, index_name=index_name)
+        docsearch = Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
     except Exception as e:
         print(f"Error while indexing: {e}")
         return None
     return docsearch
 
 def extract_text_from_pdf(pdf_path):
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"No file found at {pdf_path}")
     pdf_reader = PdfReader(pdf_path)
-    text = ""
-    for page in pdf_reader.pages:
+    text = ''
+    count = len(pdf_reader.pages)
+    for i in range(count):
+        page = pdf_reader.pages[i]
         text += page.extract_text()
     return text
  
 def perform_query(index, query):
-    docs = index.similarity_search(query)
-    llm = OpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
-    chain = load_qa_chain(llm, chain_type="stuff")
-    response = chain.run(input_documents=docs, question=query)
+    try:
+        docs = index.similarity_search(query)
+        llm = OpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
+        chain = load_qa_chain(llm, chain_type="stuff")
+        response = chain.run(input_documents=docs, question=query)
+    except Exception as e:
+        print(f"Error while performing query: {e}")
+        return (f"Error: {e}")
     return response
     
 @app.route('/upload', methods=['POST'])
@@ -136,54 +161,19 @@ def search():
         query = request.form['query']
         if pdf and query:
             # Check the file extension to determine the type of document
-            if pdf.filename.endswith('.pdf'):
-                # Save the uploaded file temporarily
-                temp_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename))
-                pdf.save(temp_path)
-                # Extract text from the saved PDF
-                pdf_content = extract_text_from_pdf(temp_path)
-                pdf_content = limit_tokens(pdf_content)
-                # Remove the temporary file
-                os.remove(temp_path)
-                index = index_pdf(pdf_content)
-            elif pdf.filename.endswith('.txt'):
-                temp_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename))
-                pdf.save(temp_path)
-                
-                # Convert txt to pdf
-                pdf_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename) + ".pdf")
-                pdf_writer = PdfFileWriter()
-                with open(temp_path, 'r', encoding='utf-8') as txt_file:
-                    txt_content = txt_file.read()
-                    pdf_page = pdf_writer.addPage(PageObject.createBlankPage(width=595, height=842))
-                    pdf_page.drawText(txt_content)
-                with open(pdf_path, "wb") as pdf_file:
-                    pdf_writer.write(pdf_file)
-                
-                os.remove(temp_path)  # Remove the temporary txt file
-                
-                # Extract text from the converted PDF
-                pdf_content = extract_text_from_pdf(pdf_path)
-                pdf_content = limit_tokens(pdf_content)
-                os.remove(pdf_path)  # Remove the temporary PDF file
-                index = index_pdf(pdf_content)
+            file_extension = os.path.splitext(secure_filename(pdf.filename))[1].lower()
+            temp_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename))
+            pdf.save(temp_path)
 
-            elif pdf.filename.endswith('.docx'):
-                temp_path = os.path.join(tempfile.gettempdir(), secure_filename(pdf.filename))
-                pdf.save(temp_path)
-                
-                # Convert docx to pdf
-                pdf_path = temp_path + ".pdf"
-                docx2pdf.convert(temp_path, pdf_path)
-                os.remove(temp_path)  # Remove the temporary docx file
-                
-                # Extract text from the converted PDF
-                pdf_content = extract_text_from_pdf(pdf_path)
-                pdf_content = limit_tokens(pdf_content)
-                os.remove(pdf_path)  # Remove the temporary PDF file
-                index = index_pdf(pdf_content)
+            if file_extension in ['.pdf', '.txt', '.docx']:
+                pdf_content = read_content(temp_path)  # Ensure this returns a single string
             else:
                 return "Unsupported file format."
+
+            if pdf_content is None:
+                return "Error processing the file."
+
+            index = index_pdf(pdf_content)
             results = perform_query(index, query)
             app.logger.debug('Search completed successfully.')
             return render_template('search_results.html', query=query, results=results)
@@ -271,11 +261,11 @@ def serve_static(filename):
     return app.send_static_file(filename)
 
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found():
     return render_template('404.html'), 404
 
 @app.errorhandler(413)
-def request_entity_too_large(error):
+def request_entity_too_large():
     return "File too large. Max allowed size is 16MB.", 413
 
 @app.route('/')
