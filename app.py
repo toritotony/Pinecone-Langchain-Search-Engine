@@ -23,6 +23,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone
 from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import whisper
@@ -62,8 +63,9 @@ limiter = Limiter(app=app, key_func=get_remote_address)  # Adjust based on your 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def limit_tokens(text, max_tokens=3900, buffer_tokens=260): 
-    num_tokens = len(text.split())  
+def limit_tokens(text, max_tokens=8000, buffer_tokens=260): 
+    num_tokens = len(text.split())
+    print (num_tokens)  
     if num_tokens <= max_tokens - buffer_tokens:
         return [text]
 
@@ -106,19 +108,18 @@ def index_pdf(content):
         print("Error: Unsupported content type or unable to read content.")
         return None
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
-    texts = text_splitter.create_documents(content)
-    texts = [text for text in texts if len(texts) <= 3900]
-    texts = [subtext for text in texts for subtext in limit_tokens(text)]
-    embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    
+    texts = limit_tokens(content)
+    embeddings = OpenAIEmbeddings(chunk_size=200, openai_api_key=OPENAI_API_KEY)
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
     index_name = "test"
     try:
-        docsearch = Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
+        docsearch = Pinecone.from_texts([t for t in texts], embeddings, index_name=index_name)
     except Exception as e:
         print(f"Error while indexing: {e}")
         return None
     return docsearch
+
 
 def extract_text_from_pdf(pdf_path):
     if not os.path.exists(pdf_path):
@@ -134,7 +135,7 @@ def extract_text_from_pdf(pdf_path):
 def perform_query(index, query):
     try:
         docs = index.similarity_search(query)
-        llm = OpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
+        llm = ChatOpenAI(model_name="gpt-4", max_tokens=8000, temperature=0, openai_api_key=OPENAI_API_KEY)
         chain = load_qa_chain(llm, chain_type="stuff")
         response = chain.run(input_documents=docs, question=query)
     except Exception as e:
@@ -261,11 +262,11 @@ def serve_static(filename):
     return app.send_static_file(filename)
 
 @app.errorhandler(404)
-def page_not_found():
+def page_not_found(e):
     return render_template('404.html'), 404
 
 @app.errorhandler(413)
-def request_entity_too_large():
+def request_entity_too_large(e):
     return "File too large. Max allowed size is 16MB.", 413
 
 @app.route('/')
