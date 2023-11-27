@@ -136,7 +136,7 @@ def extract_text_from_pdf(pdf_path):
 def perform_query(index, query):
     try:
         docs = index.similarity_search(query)
-        llm = ChatOpenAI(model_name="gpt-4", max_tokens=8000, temperature=0, openai_api_key=OPENAI_API_KEY)
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo-1106", request_timeout=1500, max_tokens=4096, temperature=0, openai_api_key=OPENAI_API_KEY)
         chain = load_qa_chain(llm, chain_type="stuff")
         response = chain.run(input_documents=docs, question=query)
     except Exception as e:
@@ -247,7 +247,7 @@ def video_transcribe():
                 audio_stream = yt.streams.filter(only_audio=True).first()
                 audio_stream.download(output_path=temp_dir.name, filename='youtube_audio_copy.mp3')
                 print("Audio downloaded successfully.")
-                result = model.transcribe(temp_audio_mp3_path)
+                result = model.transcribe(temp_audio_mp3_path, fp16=False)
                 transcribed_text = result["text"]
                 transcribed_texts = limit_tokens(transcribed_text)
                 for text in transcribed_texts:
