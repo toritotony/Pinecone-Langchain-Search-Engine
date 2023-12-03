@@ -1,31 +1,23 @@
 # External imports
 import os
 import requests
-import logging
 import tempfile
 import mimetypes
 import docx2txt
-import docx2pdf
 import pythoncom
-import yt_dlp
 from io import BytesIO
-from PyPDF2 import PdfReader, PdfFileWriter, PageObject
+from PyPDF2 import PdfReader
 from pytube import YouTube
 from flask import Flask, render_template, request
 from flask_limiter import Limiter
 from werkzeug.utils import secure_filename
-from docx import Document
-from reportlab.pdfgen import canvas
 
 
 # Internal imports
-from langchain.document_loaders import PyPDFLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone
-from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 import whisper
 import pinecone
 import config
@@ -65,7 +57,7 @@ def allowed_file(filename):
 
 def limit_tokens(text, max_tokens=8000, buffer_tokens=260): 
     num_tokens = len(text.split())
-    print (num_tokens)  
+    app.logger.debug(num_tokens)  
     if num_tokens <= max_tokens - buffer_tokens:
         return [text]
 
@@ -82,6 +74,7 @@ def limit_tokens(text, max_tokens=8000, buffer_tokens=260):
     return texts
 
 def read_content(file_path):
+    app.logger.debug("Reading content")
     file_extension = os.path.splitext(file_path)[1].lower()
     if file_extension == '.pdf':
         # Extract text from PDF
@@ -100,14 +93,13 @@ def read_content(file_path):
         return None  # Unsupported file type
 
 def index_pdf(content):
-    logging.debug(f"index_pdf: Function called with content type: {type(content)}")
+    app.logger.debug(f"index_pdf: Function called with content type: {type(content)}")
     if not isinstance(content, str):  
         content = read_content(content)
 
     if content is None:
         print("Error: Unsupported content type or unable to read content.")
         return None
-
     
     texts = limit_tokens(content)
     embeddings = OpenAIEmbeddings(chunk_size=200, openai_api_key=OPENAI_API_KEY)
@@ -120,9 +112,8 @@ def index_pdf(content):
         return None
     return docsearch
 
-
 def extract_text_from_pdf(pdf_path):
-    logging.debug(f"extract_text_from_pdf: Function called with path: {pdf_path}")
+    app.logger.debug(f"extract_text_from_pdf: Function called with path: {pdf_path}")
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"No file found at {pdf_path}")
     pdf_reader = PdfReader(pdf_path)
@@ -140,7 +131,7 @@ def perform_query(index, query):
         chain = load_qa_chain(llm, chain_type="stuff")
         response = chain.run(input_documents=docs, question=query)
     except Exception as e:
-        print(f"Error while performing query: {e}")
+        app.logger.error(f"Error while performing query: {e}")
         return (f"Error: {e}")
     return response
     
@@ -188,42 +179,42 @@ def search():
 
 @app.route('/index_from_link', methods=['POST'])
 def index_from_link():
-    logging.debug("index_from_link: Function called")
+    app.logger.debug("index_from_link: Function called")
     try:
         link = request.form['pdf_link']
         query = request.form['query']
-        logging.debug(f"Received link: {link} and query: {query}")
+        app.logger.debug(f"Received link: {link} and query: {query}")
 
         if link and query:
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             temp_file_path = temp_file.name
             try:
                 response = requests.get(link)
-                logging.debug(f"HTTP response status: {response.status_code}")
+                app.logger.debug(f"HTTP response status: {response.status_code}")
                 if response.status_code == 200:
                     temp_file.write(response.content)
                 else:
                     return "Failed to fetch content from the provided link."
                 mime_type, _ = mimetypes.guess_type(link)
-                logging.debug(f"Determined MIME type: {mime_type}")
+                app.logger.debug(f"Determined MIME type: {mime_type}")
                 if mime_type == 'application/pdf':
                     content_text = extract_text_from_pdf(temp_file_path)
                     content_text = limit_tokens(content_text)
-                    logging.debug(f"Extracted content type: {type(content_text)}")
+                    app.logger.debug(f"Extracted content type: {type(content_text)}")
                 elif mime_type == 'text/plain':
                     with open(temp_file_path, 'r', encoding='utf-8') as txt_file:
                         content_text = txt_file.read()
                         content_text = limit_tokens(content_text)
-                        logging.debug(f"Extracted content type: {type(content_text)}")
+                        app.logger.debug(f"Extracted content type: {type(content_text)}")
                 elif mime_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     docx_content = temp_file.read()
                     content_text = docx2txt.process(BytesIO(docx_content))
                     content_text = limit_tokens(content_text)
-                    logging.debug(f"Extracted content type: {type(content_text)}")
+                    app.logger.debug(f"Extracted content type: {type(content_text)}")
                 else:
                     return "Unsupported link format."
                 index = index_pdf(content_text)
-                logging.debug(f"Index object created: {index}")
+                app.logger.debug(f"Index object created: {index}")
                 results = perform_query(index, query)
                 return render_template('search_results.html', query=query, results=results)
             finally:
@@ -231,7 +222,7 @@ def index_from_link():
                 os.unlink(temp_file_path)
         return "Please provide both a link and a query."
     except Exception as e:
-        logging.error(f"index_from_link: Error encountered - {str(e)}")
+        app.logger.error(f"index_from_link: Error encountered - {str(e)}")
         return render_template('error.html', error_message=str(e))
 
 @app.route('/video_transcribe', methods=['POST'])
@@ -246,7 +237,7 @@ def video_transcribe():
                 yt = YouTube(video_link)
                 audio_stream = yt.streams.filter(only_audio=True).first()
                 audio_stream.download(output_path=temp_dir.name, filename='youtube_audio_copy.mp3')
-                print("Audio downloaded successfully.")
+                app.logger.debug("Audio downloaded successfully.")
                 result = model.transcribe(temp_audio_mp3_path, fp16=False)
                 transcribed_text = result["text"]
                 transcribed_texts = limit_tokens(transcribed_text)
@@ -260,11 +251,13 @@ def video_transcribe():
                 print("Query successful")
                 return render_template('search_results.html', query=query, results=results)
             except Exception as download_error:
+                app.logger.error(f"Error downloading: {e}")
                 return f"Error downloading the YouTube video: {str(download_error)}"
             finally:
                 if os.path.exists(temp_audio_mp3_path):
                     os.remove(temp_audio_mp3_path)
     except Exception as e:
+        app.logger.error(f"Error in video_transcribe: {e}")
         return render_template('error.html', error_message=str(e))
 
 @app.route('/static/<path:filename>')
