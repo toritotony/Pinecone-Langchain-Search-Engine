@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Document Link Search</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <img id="logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
+    <h1>Document Link Search</h1>
+    <form action="/index_from_link" method="POST">
+        <label for="pdf_link">Enter Document Link:</label>
+        <input type="text" id="pdf_link" name="pdf_link" required><br><br>
+        
+        <label for="query">Search:</label>
+        <input type="text" id="query" name="query" required><br><br>
+        
+        <input type="submit" value="Search with PDF Link">
+    </form>
+    <!-- Optionally, add navigation links to other search forms -->
+</body>
+</html>

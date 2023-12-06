@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Selection</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        #searchType {
+            width: 15%;  /* Makes the dropdown larger */
+            padding: 5px;
+            margin-top: 10px;
+        }
+        .description {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .github-link {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .small-logo {
+        width: 100px;  /* Adjust as needed */
+        height: auto;
+    }
+    </style>
+</head>
+<body>
+    <img id="logo" class="small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="A description of the image">
+    <h1>Content Search App v1</h1>
+
+    <div class="description">
+        <p>This project utilizes python, html, css, javascript; pinecone, openai, langchain, whisper, pytube, and more to 
+            allow users to search through uploaded documents, document links, and youtube links. Choose a search type below to get 
+            started, and feel free to check out my public Github repos via the link below.</p>
+    </div>
+
+    <div class="github-link">
+        <a href="https://github.com/toritotony" target="_blank">View this project on GitHub</a>
+    </div>
+    
+    <form id="searchForm">
+        <label for="searchType">Select Type:</label>
+        <select id="searchType" name="searchType" onchange="navigateToSearch()">
+            <option value="">Select...</option>
+            <option value="/document_search">Document Upload Search</option>
+            <option value="/link_search">PDF Link Search</option>
+            <option value="/video_search">Video Link Search</option>
+        </select>
+    </form>
+
+    <script>
+        function navigateToSearch() {
+            var searchType = document.getElementById('searchType').value;
+            if (searchType) {
+                window.location.href = searchType;
+            }
+        }
+    </script>
+</body>
+</html>

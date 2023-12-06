@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Document Upload Search</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <img id="logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
+    <h1>Document Upload Search</h1>
+    <form action="/search" method="POST" enctype="multipart/form-data">
+        <label for="pdf">Upload Document (PDF, TXT, DOCX):</label>
+        <input type="file" id="pdf" name="pdf" accept=".pdf, .txt, .docx" required><br><br>
+
+        <label for="query">Search:</label>
+        <input type="text" id="query" name="query" required><br><br>
+
+        <input type="submit" value="Search">
+    </form>
+    <!-- Optionally, add navigation links to other search forms -->
+</body>
+</html>

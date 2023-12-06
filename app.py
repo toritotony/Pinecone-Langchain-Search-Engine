@@ -277,7 +277,19 @@ def request_entity_too_large(e):
 
 @app.route('/')
 def search_form():
-    return render_template('search_form.html')
+    return render_template('index.html')
+
+@app.route('/document_search')
+def document_search():
+    return render_template('document_search.html')
+
+@app.route('/link_search')
+def link_search():
+    return render_template('link_search.html')
+
+@app.route('/video_search')
+def video_search():
+    return render_template('video_search.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
