@@ -213,9 +213,12 @@ def index_from_link():
                     app.logger.debug(f"Extracted content type: {type(content_text)}")
                 else:
                     return "Unsupported link format."
-                index = index_pdf(content_text)
-                app.logger.debug(f"Index object created: {index}")
-                results = perform_query(index, query)
+                all_results = []
+                for text_chunk in content_text:
+                    index = index_pdf(text_chunk)  # Process each chunk individually
+                    app.logger.debug(f"Index object created: {index}")
+                    results = perform_query(index, query)
+                    all_results.extend(results)
                 return render_template('search_results.html', query=query, results=results)
             finally:
                 temp_file.close()
