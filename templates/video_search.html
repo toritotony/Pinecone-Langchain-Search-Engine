@@ -3,9 +3,15 @@
 <head>
     <title>Video Link Search</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .small-logo {
+        width: 100px;  /* Adjust as needed */
+        height: auto;
+    }
+    </style>
 </head>
 <body>
-    <img id="logo" src="/static/images/bookwitharmsandlegs.jpg" alt="A description of the image">
+    <img id="logo" class= "small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="A description of the image">
     <h1>Video Link Search</h1>
     <form action="/video_transcribe" method="POST">
         <label for="video_link">Enter Video Link:</label>

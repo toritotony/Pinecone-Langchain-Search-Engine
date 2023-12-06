@@ -3,9 +3,15 @@
 <head>
     <title>Document Link Search</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .small-logo {
+        width: 100px;  /* Adjust as needed */
+        height: auto;
+    }
+    </style>
 </head>
 <body>
-    <img id="logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
+    <img id="logo" class= "small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
     <h1>Document Link Search</h1>
     <form action="/index_from_link" method="POST">
         <label for="pdf_link">Enter Document Link:</label>

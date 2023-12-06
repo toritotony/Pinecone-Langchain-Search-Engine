@@ -3,9 +3,15 @@
 <head>
     <title>Document Upload Search</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .small-logo {
+        width: 100px;  /* Adjust as needed */
+        height: auto;
+    }
+    </style>
 </head>
 <body>
-    <img id="logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
+    <img id="logo" class= "small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
     <h1>Document Upload Search</h1>
     <form action="/search" method="POST" enctype="multipart/form-data">
         <label for="pdf">Upload Document (PDF, TXT, DOCX):</label>
