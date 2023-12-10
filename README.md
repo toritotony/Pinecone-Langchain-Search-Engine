@@ -1,7 +1,7 @@
 # Document Search App
 
 ## Project Overview
-The Document Search App is a Flask-based web application designed for efficient and accurate searching within various document formats, including PDF, TXT, and DOCX. It leverages advanced text processing and search algorithms to provide a powerful tool for content retrieval and data analysis.
+The Document Search App is a Flask-based web application designed for efficient and accurate searching within various document formats, including PDF, TXT, and DOCX. It also has the capacity to query linked documents such as published papers online, as well as linked videos (Youtube to be specific). It leverages advanced text processing and search algorithms to provide a powerful tool for content retrieval and data analysis.
 
 ## Key Packages and Open Source Projects Utilized
 - **Flask Framework**: Backbone of the web application, offering a dynamic and responsive user interface, and seamless backend integration.
@@ -21,7 +21,7 @@ The Document Search App is a Flask-based web application designed for efficient 
 ## Objectives and Benefits
 Designed to simplify searching and extracting information from various document formats, this app is particularly beneficial for those working with large volumes of textual data. The integration of advanced AI and machine learning techniques ensures accuracy and contextual relevance in search results.
 
-For more information, detailed documentation, and usage guidelines, visit the project's GitHub repository: [Document Search App](https://github.com/yourusername/document-search-app).
+For more information, detailed documentation, and usage guidelines, visit the project's GitHub repository: [Document Search App](https://github.com/toritotony/pinecone-test).
 
 ## License
 This project is licensed under the MIT License.
