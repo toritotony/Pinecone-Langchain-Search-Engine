@@ -55,21 +55,18 @@ limiter = Limiter(app=app, key_func=get_remote_address)  # Adjust based on your 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def limit_tokens(text, max_tokens=8000, buffer_tokens=260): 
-    num_tokens = len(text.split())
-    app.logger.debug(num_tokens)  
-    if num_tokens <= max_tokens - buffer_tokens:
+def limit_tokens(text, max_chars=10000): 
+    """
+    Splits the text into chunks with a maximum number of characters.
+    """
+    if len(text) <= max_chars:
         return [text]
 
-    words = text.split()
     texts = []
-    truncated_text = ""
-
-    while words:
-        while words and len(truncated_text.split()) + len(words[0].split()) <= max_tokens - buffer_tokens:
-            truncated_text += words.pop(0) + " "
-        texts.append(truncated_text)
-        truncated_text = ""
+    while text:
+        chunk = text[:max_chars]
+        texts.append(chunk)
+        text = text[max_chars:]
     
     return texts
 
@@ -93,23 +90,32 @@ def read_content(file_path):
         return None  # Unsupported file type
 
 def index_pdf(content):
+    """
+    Indexes the given content in Pinecone after splitting it into smaller chunks.
+    """
     app.logger.debug(f"index_pdf: Function called with content type: {type(content)}")
+    
     if not isinstance(content, str):  
         content = read_content(content)
 
     if content is None:
-        print("Error: Unsupported content type or unable to read content.")
+        app.logger.error("Unsupported content type or unable to read content.")
         return None
     
+    # Splitting the content into smaller chunks
     texts = limit_tokens(content)
     embeddings = OpenAIEmbeddings(chunk_size=200, openai_api_key=OPENAI_API_KEY)
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENV)
     index_name = "test"
-    try:
-        docsearch = Pinecone.from_texts([t for t in texts], embeddings, index_name=index_name)
-    except Exception as e:
-        print(f"Error while indexing: {e}")
-        return None
+
+    for text_chunk in texts:
+        try:
+            # Index each chunk as a separate vector
+            docsearch = Pinecone.from_texts([text_chunk], embeddings, index_name=index_name)
+            app.logger.debug("Chunk indexed successfully.")
+        except Exception as e:
+            app.logger.error(f"Error while indexing chunk: {e}")
+
     return docsearch
 
 def extract_text_from_pdf(pdf_path):
@@ -127,7 +133,7 @@ def extract_text_from_pdf(pdf_path):
 def perform_query(index, query):
     try:
         docs = index.similarity_search(query)
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo-1106", request_timeout=1500, max_tokens=4096, temperature=0, openai_api_key=OPENAI_API_KEY)
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo-1106", request_timeout=1500, max_tokens=2048, temperature=0, openai_api_key=OPENAI_API_KEY)
         chain = load_qa_chain(llm, chain_type="stuff")
         response = chain.run(input_documents=docs, question=query)
     except Exception as e:
@@ -247,11 +253,11 @@ def video_transcribe():
                 for text in transcribed_texts:
                     index = index_pdf(text)
                     results = perform_query(index, query)
-                print(transcribed_text)
+                app.logger.debug(transcribed_text)
                 index = index_pdf(transcribed_text)
-                print("Indexing successful")
+                app.logger.debug("Indexing successful")
                 results = perform_query(index, query)
-                print("Query successful")
+                app.logger.debug("Query successful")
                 return render_template('search_results.html', query=query, results=results)
             except Exception as download_error:
                 app.logger.error(f"Error downloading: {e}")
