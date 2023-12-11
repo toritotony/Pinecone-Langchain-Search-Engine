@@ -1,0 +1,9 @@
+venv/
+test-venv/
+__pycache__/
+.vs/
+desktop.ini
+downloaded_pdf.pdf
+book-search.ipynb 
+README.md
+
