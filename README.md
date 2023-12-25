@@ -6,9 +6,10 @@ The Document Search App is a Flask-based web application designed for efficient 
 ## Key Packages and Open Source Projects Utilized
 - **Flask Framework**: Backbone of the web application, offering a dynamic and responsive user interface, and seamless backend integration.
 - **PyPDF2 & docx2txt**: Essential for extracting text from PDF and DOCX files, crucial for the app's content processing.
-- **OpenAIEmbeddings & Pinecone**: Utilized for generating text embeddings and indexing, offering advanced search functionalities.
+- **Pinecone**: Utilized for generating text embeddings and indexing, offering advanced search functionalities.
 - **whisper (OpenAI)**: Employed for transcribing audio content from YouTube videos, expanding search capabilities to multimedia content.
 - **Python Standard Libraries**: Includes `os`, `tempfile`, and `mimetypes` for file handling and system operations.
+- **Langchain**: Includes embedding models, LLM models from OpenAI, and other functions accommodating for document manipulation and querying.
 
 ## Functionality and Workflow
 1. **Content Extraction**: Extracts text from uploaded files or fetched documents.
