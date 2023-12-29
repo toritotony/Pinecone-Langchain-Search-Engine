@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, Flask
 from werkzeug.utils import secure_filename
 import pythoncom
 import os
@@ -156,7 +156,7 @@ def serve_static(filename):
     return app.send_static_file(filename)
 
 @app.errorhandler(404)
-def page_not_found():
+def page_not_found(e):
     return render_template('404.html'), 404
 
 @app.errorhandler(413)
@@ -178,3 +178,8 @@ def link_search():
 @app.route('/video_search')
 def video_search():
     return render_template('video_search.html')
+
+@app.route('/favicon.ico')
+def ignore_favicon():
+    return '', 204
+
