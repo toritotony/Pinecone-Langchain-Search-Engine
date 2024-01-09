@@ -37,7 +37,8 @@
         <a href="https://github.com/toritotony" target="_blank">toritotony Github</a>
     </div>
     
-    <form id="searchForm">
+    <form id="searchForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <label for="searchType">Select Type:</label>
         <select id="searchType" name="searchType" onchange="navigateToSearch()">
             <option value="">Select...</option>

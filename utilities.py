@@ -1,12 +1,17 @@
 import os
+import config
 import docx2txt
 from PyPDF2 import PdfReader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
+from flask_wtf.csrf import CSRFProtect
 from app import app, OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_API_ENV, ALLOWED_EXTENSIONS
 import pinecone
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', config.SECRET_KEY)
+csrf = CSRFProtect(app)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

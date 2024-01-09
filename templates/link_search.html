@@ -5,15 +5,17 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         .small-logo {
-        width: 50px;  /* Adjust as needed */
-        height: 275px;
-    }
+            width: 50px;  /* Adjust as needed */
+            height: 275px;
+        }
     </style>
 </head>
 <body>
-    <img id="logo" class= "small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
+    <img id="logo" class="small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
     <h1>Document Link Search</h1>
     <form action="/index_from_link" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        
         <label for="pdf_link">Enter Document Link:</label>
         <input type="text" id="pdf_link" name="pdf_link" required><br><br>
         
