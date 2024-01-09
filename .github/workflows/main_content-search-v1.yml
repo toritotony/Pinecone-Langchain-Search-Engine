@@ -64,4 +64,4 @@ jobs:
         with:
           app-name: 'Content-Search-V1'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B85C1434595C48FCB064E32AB589546F }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7B77BC5749F949E1982339273C7EA60C }}
