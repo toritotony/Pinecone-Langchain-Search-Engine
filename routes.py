@@ -3,7 +3,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from werkzeug.utils import secure_filename
 import config
-import pythoncom
 import os
 import tempfile
 import requests
@@ -51,7 +50,6 @@ def upload_file():
 def search():
     form = MyForm()
     if form.validate_on_submit():
-        pythoncom.CoInitialize()
         app.logger.debug('Received search request.')
         try:
             pdf = request.files['pdf']
