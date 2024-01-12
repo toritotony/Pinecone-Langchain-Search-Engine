@@ -17,6 +17,10 @@
             margin-top: 20px;
             font-size: 18px;
         }
+        .github-logo {
+            width: 100px; /* Adjust this value as needed */
+            height: auto; /* This maintains the aspect ratio of the image */
+        }
         .small-logo {
         width: 50px;  /* Adjust as needed */
         height: 275px;
@@ -24,17 +28,17 @@
     </style>
 </head>
 <body>
-    <img id="logo" class="small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="A description of the image">
-    <h1>Content Search App v1</h1>
+    <br><br><br><br><br><br>
+    <h1>Content Search App V1</h1>
+    <br>
 
     <div class="description">
-        <p>This project utilizes python, html, css, javascript; pinecone, openai, langchain, whisper, pytube, and more to 
-            allow users to search through uploaded documents, document links, and youtube links. Choose a search type below to get 
-            started, and feel free to check out my public Github repos via the link below.</p>
+        <p>Get the answers you want from your online books, public documents and Youtube videos. It's all quick and easy with the content search application. Choose a search type below to get 
+            started, then provide the corresponding content type, then enter a question to ask the content, and search! <br><br>Feel free to check out my public Github repos via the embedded link below.</p>
     </div>
 
     <div class="github-link">
-        <a href="https://github.com/toritotony" target="_blank">toritotony Github</a>
+        <a href="https://github.com/toritotony" target="_blank"> <img src="/static/images/github-mark-white.png" alt="Github inspired logo"  class="github-logo"> </a>
     </div>
     
     <form id="searchForm" method="POST">

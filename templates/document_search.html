@@ -11,18 +11,22 @@
     </style>
 </head>
 <body>
-    <img id="logo" class="small-logo" src="/static/images/bookwitharmsandlegs.jpg" alt="An animated personification of a book">
     <h1>Document Upload Search</h1>
     <form action="/search" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <label for="pdf">Upload Document (PDF, TXT, DOCX):</label>
+        <label for="pdf">Upload Document (PDF,DOCX,TXT):</label>
         <input type="file" id="pdf" name="pdf" accept=".pdf, .txt, .docx" required><br><br>
 
-        <label for="query">Search:</label>
+        <label for="query">Question:</label>
         <input type="text" id="query" name="query" required><br><br>
 
         <input type="submit" value="Search">
     </form>
     <!-- Optionally, add navigation links to other search forms -->
+    <form action="/" method="GET">
+        <div class="back-button">
+            <button type="submit" class="search-button">Home</button>
+        </div>
+    </form>
 </body>
 </html>

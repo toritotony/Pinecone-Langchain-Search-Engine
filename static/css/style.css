@@ -1,12 +1,20 @@
 body {
-    background: #141414;
-    color: white;
-    font-family: arial;
+    background-image: url('/static/images/DALLE-image.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-color: #141414;
+    color: black;
+    font-family: consolas;
     text-align: center;
 }
 
 #logo {
     width: 300px;
+}
+
+a img {
+    border: none; /* Removes border around image links */
+    margin: 10px; /* Adds margin around the logo */
 }
 
 input {
