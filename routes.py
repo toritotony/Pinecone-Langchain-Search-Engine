@@ -159,7 +159,7 @@ def video_transcribe():
                     app.logger.debug("Query successful")
                     return render_template('search_results.html', query=query, results=results)
                 except Exception as download_error:
-                    app.logger.error(f"Error downloading: {e}")
+                    app.logger.error(f"Error downloading: {download_error}")
                     return f"Error downloading the YouTube video: {str(download_error)}"
                 finally:
                     if os.path.exists(temp_audio_mp3_path):
