@@ -79,7 +79,7 @@ def extract_text_from_pdf(pdf_path):
         page = pdf_reader.pages[i]
         text += page.extract_text()
     return text
- 
+
 def perform_query(index, query):
     try:
         docs = index.similarity_search(query)
