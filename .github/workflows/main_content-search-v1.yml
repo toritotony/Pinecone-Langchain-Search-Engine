@@ -82,3 +82,4 @@ jobs:
           app-name: 'Content-Search-V1'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DE1E55E8071D4465A904EC48D03EA643 }}
+          startup-command: 'bash -c "apt-get update && apt-get install ffmpeg"'
