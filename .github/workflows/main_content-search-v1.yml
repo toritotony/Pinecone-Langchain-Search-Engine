@@ -27,10 +27,10 @@ jobs:
             python -m pip install --upgrade pip
   
       - name: Update apt packages
-        run: apt-get update
+        run: sudo apt-get update
   
       - name: Install ffmpeg
-        run: apt-get install ffmpeg
+        run: sudo apt-get install -y ffmpeg
   
       - name: Create and start virtual environment
         run: |
