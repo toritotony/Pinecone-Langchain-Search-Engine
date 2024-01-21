@@ -79,7 +79,7 @@ jobs:
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
-          app-name: 'content-search-v1/dev'
+          app-name: 'content-search-v1'
           slot-name: 'dev'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DE1E55E8071D4465A904EC48D03EA643 }}
 
