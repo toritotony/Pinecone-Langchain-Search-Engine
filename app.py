@@ -21,7 +21,7 @@ PINECONE_API_ENV = os.environ.get('PINECONE_API_ENV', config.PINECONE_API_ENV)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
 
 from routes import *
-#testtt
+#testt
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)
     #app.run(debug=True)
