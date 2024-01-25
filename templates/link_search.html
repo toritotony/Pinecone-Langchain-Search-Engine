@@ -8,18 +8,33 @@
             width: 50px;  /* Adjust as needed */
             height: 275px;
         }
-        div#loading {
-        width: 35px;
-        height: 35px;
-        display: none;
-        background: url(/static/loadingimage.gif) no-repeat;
-        cursor: wait;
+        /* Add the CSS for the loader here */
+        .loader {
+            display: none; /* Initially hide the loader */
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 999; /* Make sure it's on top of other content */
+            background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent background */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <h1>Document Link Search</h1>
-    <form action="/index_from_link" method="POST">
+    <div class="loader"></div>
+    <form action="/index_from_link" method="POST" onsubmit="showLoader()">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         
         <label for="pdf_link">Enter Public Link (PDF,DOCX,TXT):</label>
@@ -33,8 +48,16 @@
     <!-- Optionally, add navigation links to other search forms -->
     <form action="/" method="GET">
         <div class="back-button">
-            <button type="submit" onclick="loading();" class="search-button">Home</button>
+            <button type="submit" class="search-button">Home</button>
         </div>
     </form>
+
+    <!-- Add JavaScript to control the loader -->
+    <script>
+        // Function to show the loader
+        function showLoader() {
+            document.querySelector(".loader").style.display = "block";
+        }
+    </script>
 </body>
 </html>
