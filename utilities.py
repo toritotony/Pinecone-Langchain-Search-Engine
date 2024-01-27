@@ -10,7 +10,7 @@ from flask_wtf.csrf import CSRFProtect
 from app import app, OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_API_ENV, ALLOWED_EXTENSIONS
 import pinecone
 
-#test
+#testt
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', config.SECRET_KEY)
 csrf = CSRFProtect(app)
 
