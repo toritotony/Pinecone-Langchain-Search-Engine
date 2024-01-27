@@ -17,7 +17,7 @@ csrf = CSRFProtect(app)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def limit_tokens(text, max_chars=10000): 
+def limit_tokens(text, max_chars=5000): 
     if len(text) <= max_chars:
         return [text]
 
