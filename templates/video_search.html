@@ -8,11 +8,35 @@
             width: 50px;  /* Adjust as needed */
             height: 275px;
         }
+        .loader {
+            display: none; /* Initially hide the loader */
+            border: 16px solid #000000; /* Light grey */
+            border-top: 16px solid #fc6fc2; 
+            border-right: 16px solid #ae3bd4;
+            border-bottom: 16px solid #4ac6ff;
+            border-left: 16px solid #000000;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            animation: spin 2s linear infinite;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 999; /* Make sure it's on top of other content */
+            background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent background */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <h1>Video Link Search</h1>
-    <form action="/video_transcribe" method="POST">
+    <div class="loader"></div>
+    <form action="/video_transcribe" method="POST" onsubmit="showLoader()">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         
         <label for="video_link">Enter YouTube Video Link:</label>
@@ -29,5 +53,11 @@
             <button type="submit" class="search-button">Home</button>
         </div>
     </form>
+    <script>
+        // Function to show the loader
+        function showLoader() {
+            document.querySelector(".loader").style.display = "block";
+        }
+    </script>
 </body>
 </html>
