@@ -43,7 +43,7 @@ def read_content(file_path):
     elif file_extension == '.docx':
         return docx2txt.process(file_path)
     else:
-        return None  # Unsupported file type
+        return None  
 
 def index_pdf(content):
     app.logger.debug(f"index_pdf: Function called with content type: {type(content)}")
