@@ -94,4 +94,4 @@ def perform_query(index, query):
     except Exception as e:
         app.logger.error(f"Error while performing query: {e}")
         return (f"Error: {e}")
-    return docs
+    return response
