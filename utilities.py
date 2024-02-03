@@ -90,6 +90,7 @@ def perform_query(index, query):
         llm = ChatOpenAI(model_name="gpt-3.5-turbo-1106", request_timeout=1500, max_tokens=2048, temperature=0, openai_api_key=OPENAI_API_KEY)
         chain = load_qa_chain(llm, chain_type="stuff")
         response = chain.run(input_documents=docs, question=query)
+        response = docs
         pinecone.delete_index(name=index_name)
     except Exception as e:
         app.logger.error(f"Error while performing query: {e}")
