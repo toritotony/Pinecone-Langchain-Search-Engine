@@ -20,7 +20,7 @@ PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', config.PINECONE_API_KEY)
 PINECONE_API_ENV = os.environ.get('PINECONE_API_ENV', config.PINECONE_API_ENV)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
 
-#testt
+#testtt
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)
     #app.run(debug=True)
