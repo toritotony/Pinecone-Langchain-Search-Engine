@@ -21,11 +21,6 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.11'
-          
-      - name: Cleanup before install
-        run: |
-           rm -rf /tmp/*
-           df -h
 
       - name: Upgrade pip
         run: |
