@@ -17,7 +17,7 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 )
-
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', config.SECRET_KEY)
 csrf = CSRFProtect(app)
@@ -133,7 +133,7 @@ def perform_query(index, query):
         chain = load_qa_chain(llm, chain_type="stuff", prompt=PROMPT_SELECTOR.get_prompt(llm))
         app.logger.debug("CHAIN")
         app.logger.debug(chain)
-        response = chain.run(input_documents=docs, question=query)
+        response = chain.run(input_documents=docs, question=query, config={'callbacks': [ConsoleCallbackHandler()]})
         app.logger.debug("RESPONSE")
         app.logger.debug(response)
         #pinecone.delete_index(name=index_name)
