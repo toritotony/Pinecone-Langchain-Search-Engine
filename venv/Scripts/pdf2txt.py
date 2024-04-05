@@ -1,4 +1,4 @@
-#!C:\Users\wolfe\OneDrive\Desktop\pinecone-test\venv\Scripts\python.exe
+#!C:\Users\wolfe\OneDrive\Documents\GitHub\Pinecone-Langchain-Search-Engine-private\venv\Scripts\python.exe
 """A command line tool for extracting text and images from PDF and
 output it to plain text, html, xml or tags."""
 import argparse
