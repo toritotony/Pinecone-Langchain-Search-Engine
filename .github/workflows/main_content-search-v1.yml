@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python version
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v1
         with:
           python-version: '3.11'
         
@@ -32,12 +32,13 @@ jobs:
       - name: Install ffmpeg
         run: sudo apt-get install -y ffmpeg
   
-      - name: Create, start venv, install dependencies
+      - name: Create & start venv
         run: |
             python -m venv venv
             source venv/bin/activate
-            pip install -r requirements.txt
-            pip install Flask-WTF
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
             
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
@@ -68,7 +69,7 @@ jobs:
         run: unzip release.zip
       
       - name: Log in to Azure CLI using service principal
-        uses: azure/login@v2
+        uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
