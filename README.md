@@ -86,8 +86,9 @@ For deploying the app on Azure App Service with GitHub Actions:
 
 ### Create Startup Commands:
 Set up commands to install dependencies and run the Gunicorn server:
-```bash
+```
 gunicorn --bind 0.0.0.0 --timeout 600 --chdir /app app:app
+```
 
 ### Configure GitHub Actions:
 - Add Azure credentials to GitHub Actions secrets.
@@ -101,7 +102,7 @@ gunicorn --bind 0.0.0.0 --timeout 600 --chdir /app app:app
 ### Test and Monitor:
 - Push changes to trigger the workflow and test the deployed application.
 
-For more detailed steps, refer to the document: "[Azure Web App Auto-Deployment via GitHub Actions](https://www.linkedin.com/feed/update/urn:li:activity:7191082240196419584/)."
+For more detailed steps, refer to the document: [Azure Web App Auto-Deployment via GitHub Actions](https://www.linkedin.com/feed/update/urn:li:activity:7191082240196419584/).
 
 ---
 
@@ -126,7 +127,7 @@ For more detailed steps, refer to the document: "[Azure Web App Auto-Deployment 
 3. Input your query and execute the search.
 4. View results in the formatted output page.
 
-For more about the app functionality and features, refer to: "[Langchain-Pinecone-OpenAI-Doc-Video-Search-Engine](https://www.linkedin.com/feed/update/urn:li:activity:7151699275293343746/)."
+For more about the app functionality and features, refer to: [Langchain-Pinecone-OpenAI-Doc-Video-Search-Engine](https://www.linkedin.com/feed/update/urn:li:activity:7151699275293343746/).
 
 ---
 
