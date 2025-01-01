@@ -86,6 +86,7 @@ venv.bak/
 /site
 .vs
 __pycache__
+config.py
 
 # mypy
 .mypy_cache/
