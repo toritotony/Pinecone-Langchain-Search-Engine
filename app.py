@@ -14,7 +14,7 @@ app.config.update(
 )
 csrf = CSRFProtect(app)
 
-UPLOAD_FOLDER = 'C:\\Users\\wolfe\\OneDrive\\Desktop\\pinecone-test\\upload-folder'
+UPLOAD_FOLDER = 'C:\\Users\\wolfe\\OneDrive\\Desktop\\Pinecone-Langchain-Search-Engine\\upload-folder'
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', config.OPENAI_API_KEY)
 PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', config.PINECONE_API_KEY)
 PINECONE_API_ENV = os.environ.get('PINECONE_API_ENV', config.PINECONE_API_ENV)
