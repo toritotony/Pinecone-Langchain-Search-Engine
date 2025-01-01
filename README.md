@@ -1,8 +1,12 @@
 # Document Search App
 
+---
+
 ## Project Overview
 
 The Document Search App is a Flask-based web application designed for efficient and accurate searching within various document formats, including PDF, TXT, and DOCX. Additionally, it enables querying of linked documents such as publicly available PDFs and transcribes YouTube videos to expand search capabilities to multimedia content. By leveraging advanced text processing, search algorithms, and embedding techniques, this app delivers a powerful solution for content retrieval and data analysis.
+
+---
 
 ## Key Features
 
@@ -13,6 +17,8 @@ The Document Search App is a Flask-based web application designed for efficient 
 5. **Interactive User Interface**: Built with Flask, featuring user-friendly forms and real-time feedback mechanisms.
 6. **AI Integration**: Integrates OpenAI’s Whisper and embedding models for transcription and intelligent query responses.
 
+---
+
 ## Technology Stack
 
 - **Backend Framework**: Flask
@@ -21,6 +27,8 @@ The Document Search App is a Flask-based web application designed for efficient 
 - **Embedding and Indexing**: Langchain, Pinecone
 - **Multimedia Handling**: OpenAI Whisper, Pytube
 - **APIs**: OpenAI, Pinecone
+
+---
 
 ## Workflow
 
@@ -41,9 +49,9 @@ The Document Search App is a Flask-based web application designed for efficient 
 5. **Result Display**:
    - The app presents results in a structured format via Flask templates.
 
-## Deployment
+--- 
 
-### Local Deployment
+## Local Deployment
 
 This application can be deployed on any Flask-compatible environment. Production deployment can utilize Gunicorn or other WSGI servers for performance.
 
@@ -71,6 +79,8 @@ This application can be deployed on any Flask-compatible environment. Production
    ```
    flask run
    ```
+
+---
 
 ## Azure Deployment
 
