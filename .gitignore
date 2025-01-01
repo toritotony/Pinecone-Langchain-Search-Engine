@@ -2,5 +2,5 @@ __pycache__
 .vs
 venv
 config.py
-.github\workflows\main_content-search-v1.yml
-.github\workflows\temp-branch_content-search-v1(dev).yml
+.github/workflows/main_content-search-v1.yml
+.github/workflows/temp-branch_content-search-v1(dev).yml
